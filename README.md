@@ -7,6 +7,7 @@ execute: the comments hold the interview question, the code proves the answer.
 1. Java multithreading and concurrency
 2. Databases — transactions, locking, JDBC
 3. Collections — HashMap internals
+4. Algorithms — the classic whiteboard warm-ups
 
 ## How to use this
 
@@ -321,6 +322,90 @@ java -cp target/classes \
 - [ ] `hashCode` distribution and `IdentityHashMap`, `WeakHashMap`, `EnumMap`
 - [ ] Fail-fast iterators and `ConcurrentModificationException`
 
+## 4. Algorithms
+
+The questions that open an interview rather than decide it: Fibonacci, factorial, reverse a
+string, is it a palindrome, binary search. They are asked because they take two minutes, and
+they are failed on the follow-up — the overflow, the edge case, the second complexity
+question — not on the algorithm.
+
+So each example gives the answer, then every follow-up that comes after it.
+
+| Example | What it covers |
+|---|---|
+| [`FibonacciExample`](src/main/java/com/sergiomartinrubio/algorithms/recursion/FibonacciExample.java) | The recursion vs the loop, measured; overlapping subproblems, `int`/`long` overflow |
+| [`FactorialExample`](src/main/java/com/sergiomartinrubio/algorithms/recursion/FactorialExample.java) | The recursion vs the loop, why 0! = 1, the stack cost, `int`/`long` overflow |
+| [`TowersOfHanoiExample`](src/main/java/com/sergiomartinrubio/algorithms/recursion/TowersOfHanoiExample.java) | Trusting the recursive call, `2^n - 1`, and the same thing with an explicit stack |
+| [`ReverseStringExample`](src/main/java/com/sergiomartinrubio/algorithms/strings/ReverseStringExample.java) | Two pointers, accidentally quadratic recursion, surrogate pairs and grapheme clusters |
+| [`PalindromeExample`](src/main/java/com/sergiomartinrubio/algorithms/strings/PalindromeExample.java) | Two pointers without allocating, ignoring punctuation, locale-safe case folding |
+| [`AnagramExample`](src/main/java/com/sergiomartinrubio/algorithms/strings/AnagramExample.java) | Sorting vs counting, why `int[26]` is a trap, grouping by a canonical key |
+| [`BinarySearchExample`](src/main/java/com/sergiomartinrubio/algorithms/arrays/BinarySearchExample.java) | The midpoint overflow, `-(insertion point) - 1`, first/last occurrence |
+| [`TwoSumExample`](src/main/java/com/sergiomartinrubio/algorithms/arrays/TwoSumExample.java) | O(n²) → one pass with a map, the sorted two-pointer variant, self-pairing |
+| [`PrimesExample`](src/main/java/com/sergiomartinrubio/algorithms/numbers/PrimesExample.java) | Trial division to √n, 6k±1, the sieve, why its inner loop starts at `i*i` |
+
+```bash
+# The recursive and iterative F(n), measured against each other
+java -cp target/classes com.sergiomartinrubio.algorithms.recursion.FibonacciExample
+
+# Reverse a string, then watch it break on an emoji, an accent and a flag
+java -cp target/classes com.sergiomartinrubio.algorithms.strings.ReverseStringExample
+
+# The midpoint overflow that hid in java.util.Arrays for nine years
+java -cp target/classes com.sergiomartinrubio.algorithms.arrays.BinarySearchExample
+```
+
+### Cheat sheet
+
+**Fibonacci, both ways**
+
+| Approach | Time | Space | Say this about it |
+|---|---|---|---|
+| Recursion | O(φⁿ) | O(n) stack | The definition; overlapping subproblems, exactly `2·F(n+1) - 1` calls |
+| Two variables in a loop | O(n) | O(1) | **The one to write** — each value computed once |
+
+**The numbers worth memorising**
+
+| | Limit |
+|---|---|
+| Largest Fibonacci in an `int` / `long` | F(46) / F(92) |
+| Largest factorial in an `int` / `long` | 12! / 20! |
+| Binary search comparisons over 1M items | 20 |
+| Hanoi moves for n disks | 2ⁿ - 1 |
+
+**Traps**
+
+- Silent overflow is the point of most of these questions. `int` and `long` wrap without an
+  error; `Math.addExact` / `Math.multiplyExact` throw instead.
+- `(low + high) / 2` overflows in binary search. Use `(low + high) >>> 1`, or
+  `low + (high - low) / 2` when the values may be `long`.
+- `Arrays.binarySearch` returns `-(insertion point) - 1` for a missing key, so `-1` means
+  "insert at 0", not "absent". Test `< 0`, never `== -1`.
+- Binary search on unsorted input returns a wrong answer, not an error. Checking the
+  precondition would be O(n) and defeat the point.
+- A `char` is a UTF-16 code unit, not a character. A two-pointer reverse splits emoji;
+  `StringBuilder.reverse()` keeps surrogate pairs but still breaks combining accents and
+  flags. Only `BreakIterator` reverses grapheme clusters.
+- `toLowerCase()` uses the default locale, where `"I"` becomes a dotless `ı` in Turkish.
+  Pass a `Locale`, or use `Character.toLowerCase`.
+- `int[26]` for letter counting throws on an uppercase letter (`'A' - 'a'` is -32) and
+  silently ignores everything non-Latin.
+- Recursion over a string with `substring` is O(n²): `substring` has copied since Java 7.
+- Java has no tail-call elimination, so "make it tail-recursive" fixes nothing. A loop does.
+- In two-sum, put into the map *after* the lookup — otherwise an element pairs with itself.
+- Trial division stops at `factor * factor <= n`, not `factor <= Math.sqrt(n)`: integer
+  arithmetic, no rounding, and no repeated `sqrt`.
+- Decide what "no answer" means (`null`, empty, `Optional`, exception) out loud rather than
+  picking one silently. Same for 0, negatives and the empty string.
+
+### Not covered yet
+
+- [ ] Sorting — quicksort vs mergesort, stability, what `Arrays.sort` actually uses
+- [ ] Linked lists — reversal, cycle detection, the two-pointer family
+- [ ] Trees — traversals, BST validation, depth and balance
+- [ ] Graphs — BFS/DFS, shortest path, topological sort
+- [ ] Sliding window and prefix sums
+- [ ] Dynamic programming — memoisation vs bottom-up, knapsack, edit distance, LCS
+
 ## Layout
 
 ```
@@ -328,14 +413,14 @@ src/main/java/com/sergiomartinrubio/
   multithreading/     one package per concurrency topic
   database/           Db.java (H2 setup) + locking/, transactions/, jdbc/
   collections/        HashMap internals, plus a from-scratch implementation
+  algorithms/         recursion/, strings/, arrays/, numbers/ -- the whiteboard classics
 src/test/java/...     assertions that prove the examples' claims
 ```
 
-Adding another subject (JVM internals, system design, algorithms) means a new package under
+Adding another subject (JVM internals, system design) means a new package under
 `com.sergiomartinrubio` and a new section above.
 
 **Deliberately deferred:** Hibernate (`LazyInitializationException`, N+1 selects). It is worth
 covering, but `hibernate-core` pulls in 16 jars (~18 MB) and needs entity mappings and a
 bootstrap, which would make this the first topic to bring a framework along. The optimistic
 locking example already notes how `@Version` maps onto the raw SQL.
-# java-interview-prep
