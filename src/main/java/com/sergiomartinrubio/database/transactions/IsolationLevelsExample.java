@@ -120,8 +120,10 @@ public class IsolationLevelsExample {
 
   static void notes() {
     // A: the default varies by engine and is worth knowing for the ones you use:
-    //      READ_COMMITTED  - Postgres, Oracle, SQL Server, H2
-    //      REPEATABLE_READ - MySQL/InnoDB
+    //      READ_COMMITTED  - Postgres, Oracle, SQL Server, H2 -> Each statement gets a new snapshot.
+    //                        So within the same transaction, two identical SELECTs can return different results.
+    //      REPEATABLE_READ - MySQL/InnoDB -> The transaction gets a stable snapshot when the transaction's first statement executes.
+    //                        Transaction A continues seeing the version of the data that was visible to its snapshot.
     //    A candidate who says "SERIALIZABLE" has usually not had to tune a database.
     System.out.println("Notes on the table above:");
     System.out.println();
