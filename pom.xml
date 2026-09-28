@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.sergiomartinrubio</groupId>
+  <artifactId>java-interview-prep</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>java-interview-prep</name>
+  <description>Runnable notes and examples for technical interview preparation.</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>5.11.4</junit.version>
+    <surefire.version>3.5.2</surefire.version>
+    <h2.version>2.3.232</h2.version>
+    <dependency.plugin.version>3.8.1</dependency.plugin.version>
+  </properties>
+
+  <dependencies>
+    <!-- In-memory database for the database/ examples. The examples themselves use only
+         the java.sql API, so H2 is needed on the classpath at runtime, not to compile. -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>${h2.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <!-- The collections tests reflect into java.util.HashMap to assert its internal
+               capacity and treeification behaviour. Without this they are skipped, not failed. -->
+          <argLine>--add-opens java.base/java.util=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+
+      <!-- Copies runtime dependencies to target/deps so the database examples can be run
+           straight from the command line with:
+             java -cp "target/classes:target/deps/*" <class> -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${dependency.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-runtime-deps</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/deps</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
